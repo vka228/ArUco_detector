@@ -31,6 +31,7 @@ class ArUcoDetector():
         self.arucoSize = arucoSize
         self.arucoDim = 4
         self.arucoDict = cv2.aruco.DICT_4X4_50
+        #self.arucoDict = cv2.aruco.DICT_APRILTAG_16H5
         self.cameraParams = camParameters
         self.cameraID = cameraID
         self.visualization = False
@@ -97,18 +98,9 @@ class ArUcoDetector():
         return tvecs, rvec
 
     def customDetect(self, img, params_dict):
-        detector_params = cv2.aruco.DetectorParameters()
-        for key, value in params_dict.items():
-            if hasattr(detector_params, key):
-                setattr(detector_params, key, value)
-        print(detector_params)
-
-        # Пересоздание детектора с новыми параметрами
-        dictionary = cv2.aruco.getPredefinedDictionary(self.arucoDict)
-        customDetector = cv2.aruco.ArucoDetector(dictionary, detector_params)
-
-
+        customDetector = self.createCustomDetector(params_dict)
         marker_corners, marker_ids, rejected_candidates = customDetector.detectMarkers(img)
+
 
 
         tvec = []
@@ -148,6 +140,37 @@ class ArUcoDetector():
 
         return tvecs, rvec
 
+    def createCustomDetector(self, params_dict):
+        detector_parameters = cv2.aruco.DetectorParameters()
+        detector_parameters.adaptiveThreshWinSizeMin = params_dict['adaptiveThreshWinSizeMin']
+        detector_parameters.adaptiveThreshWinSizeMax = params_dict['adaptiveThreshWinSizeMax']
+        detector_parameters.adaptiveThreshWinSizeStep = params_dict['adaptiveThreshWinSizeStep']
+        detector_parameters.adaptiveThreshConstant = params_dict['adaptiveThreshConstant']
+
+        detector_parameters.minMarkerPerimeterRate = params_dict['minMarkerPerimeterRate']
+        detector_parameters.maxMarkerPerimeterRate = params_dict['maxMarkerPerimeterRate']
+
+        detector_parameters.polygonalApproxAccuracyRate = params_dict['polygonalApproxAccuracyRate']
+        detector_parameters.minCornerDistanceRate = params_dict['minCornerDistanceRate']
+
+        detector_parameters.minDistanceToBorder = params_dict['minDistanceToBorder']
+        detector_parameters.minMarkerDistanceRate = params_dict['minMarkerDistanceRate']
+
+        detector_parameters.cornerRefinementMethod = params_dict['cornerRefinementMethod']
+        detector_parameters.cornerRefinementWinSize = params_dict['cornerRefinementWinSize']
+        detector_parameters.cornerRefinementMaxIterations = params_dict['cornerRefinementMaxIterations']
+        detector_parameters.cornerRefinementMinAccuracy = params_dict['cornerRefinementMinAccuracy']
+
+        detector_parameters.markerBorderBits = params_dict['markerBorderBits']
+        detector_parameters.perspectiveRemovePixelPerCell = params_dict['perspectiveRemovePixelPerCell']
+        detector_parameters.perspectiveRemoveIgnoredMarginPerCell = params_dict['perspectiveRemoveIgnoredMarginPerCell']
+        detector_parameters.maxErroneousBitsInBorderRate = params_dict['maxErroneousBitsInBorderRate']
+        detector_parameters.minOtsuStdDev = params_dict['minOtsuStdDev']
+        detector_parameters.errorCorrectionRate = params_dict['errorCorrectionRate']
+
+        dictionary = cv2.aruco.getPredefinedDictionary(self.arucoDict)
+        customDetector = cv2.aruco.ArucoDetector(dictionary, detector_parameters)
+        return customDetector
 
 
 def Rodrigues_to_Euler(rvec, degrees=False):  # in radians
@@ -173,3 +196,6 @@ def Rodrigues_to_Euler(rvec, degrees=False):  # in radians
         z *= 180 / np.pi
 
     return (x, y, z)
+
+
+

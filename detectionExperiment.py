@@ -31,7 +31,7 @@ class Experiment():
         pass
 
     def detectionExperiment(self):
-        self.getGT()
+        #self.getGT()
 
         report = pd.DataFrame({'XC' : [], "YC" : [], "ZC" : [],  "TERROR" : [], "RERROR" : [], "PERROR" : [], "YERROR" : []})
 
@@ -40,6 +40,8 @@ class Experiment():
         for i, file in enumerate(file_name):
 
             x, z = map(int, os.path.splitext(os.path.basename(file))[0].split('_'))
+            self.aruco_positions.append((x, 0, z))
+
 
             img = cv2.imread(file)
             tvec, rvec = self.detector.detect(img)
@@ -57,14 +59,24 @@ class Experiment():
             # calculating translation error
             translation_error = translationError(tvec, (x, 0, z))
 
-            # calculating rotation error
-            rotation_error = rotationError(rvec, self.aruco_angles[i])
-
 
             # writing into the log and to excel file
-            report.loc[len(report)] = [tvec[0], tvec[1], tvec[2],  translation_error, rotation_error[0], rotation_error[1], rotation_error[2]]
+            report.loc[len(report)] = [tvec[0], tvec[1], tvec[2],  translation_error, 0, 0,0]
 
         report.to_excel('./report/report_positions.xlsx', index=False)
+
+    def rotationExperiment(self):
+        self.detector.loadParams()
+        file_name = glob(self.image_path + "/*jpg")
+        file_name.sort(key=lambda x: os.path.getctime(x), reverse=True)
+        for i, file in enumerate(file_name):
+            z, angle = map(int, os.path.splitext(os.path.basename(file))[0].split('_'))
+            self.aruco_positions.append((z, 0, z))
+
+            img = cv2.imread(file)
+            tvec, rvec = self.detector.detect(img)
+            print(f'ANGLE {angle}, TRANSLATION REAL : {z}, TRANSLATION DETECTED {tvec[0][2][0]}')
+            print('')
 
     def plotResults(self, axis, error):
         res_data = pd.read_excel('./report/report_positions.xlsx')
@@ -83,7 +95,7 @@ class Experiment():
                 linewidth=2.5,
                 marker='o',
                 alpha=0.8,
-                label='Sine Wave with Noise')
+                label='')
 
         # Set axis labels with nice formatting
         ax.set_xlabel(axis,
@@ -172,11 +184,29 @@ class Experiment():
 
         # Set labels
         ax.set_xlabel('XC')
-        ax.set_ylabel('YC')
+        ax.set_ylabel('ZC')
         ax.set_zlabel('TERROR')
         ax.set_title('Position Error Surface')
 
         plt.show()
+
+    def plotIRL(self):
+        res_data = pd.read_excel('./report/report_positions.xlsx')
+        x = res_data['XC']
+        y = res_data['ZC']
+
+        fig1, ax1 = plt.subplots()
+        plt.axvline(x=-1300)
+        plt.axvline(x=1300)
+        for i, position in enumerate(self.aruco_positions):
+            circ = plt.Circle((self.aruco_positions[i][0], self.aruco_positions[i][2]), 100, color="r")
+            ax1.add_patch(circ)
+            plt.scatter(x[i], y[i])
+        plt.show()
+
+
+
+
 
 
 

@@ -5,14 +5,14 @@ import pandas as pd
 from datetime import datetime
 
 # Define the base directory
-base_dir = "calibration/datasets/two_axis_3d_printed_aruco4"
-gt_name = './data/two_axis_3d_printed_aruco4.xlsx'
+base_dir = "calibration/datasets/axis_angle_aruco"
+gt_name = './data/two_axis_new_april.xlsx'
 cam_dir = os.path.join(os.path.expanduser("~"), base_dir, "cam4")
 df_gt = pd.DataFrame({'XC' : [], "YC" : [], "ZC" : [],  "R" : [], "P" : [], "Y" : []})
 os.makedirs(cam_dir, exist_ok=True)
 
 # Initialize the camera (0 is usually the default webcam)
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 # Check if the camera opened successfully
 if not cap.isOpened():
